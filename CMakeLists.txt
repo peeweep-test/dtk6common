@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 cmake_minimum_required(VERSION 3.13)
-set (DTK_VERSION "5.6.12" CACHE STRING "define project version")
+set (DTK_VERSION "6.0.0" CACHE STRING "define project version")
 project(dtkcommon
   VERSION ${DTK_VERSION}
   DESCRIPTION "DTK common"
