@@ -1,0 +1,49 @@
+name: Auto Release
+on:
+  pull_request_target:
+  push:
+    branches:
+      - 'main'
+      - 'master'
+
+concurrency:
+  group: ${{ github.workflow }}-pull/${{ github.event.number }}
+  cancel-in-progress: true
+
+jobs:
+  # 检查PR格式的正确性
+  releaselint:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request_target'
+    steps:
+      - name: 检出 PR 代码
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: 检查是否为发布 PR
+        id: check_release
+        run: |
+          COMMIT_MSG=$(git log --format=%s -n 1 ${{ github.event.pull_request.head.sha }})
+          if ! echo "$COMMIT_MSG" | grep -q '^release'; then
+            echo "Commit 标题不以 'release' 开头，跳过发布流程……"
+            echo "is_release=false" >> $GITHUB_OUTPUT
+          else
+            echo "is_release=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 检查 PR 格式
+        if: steps.check_release.outputs.is_release == 'true'
+        run: |
+          COMMITS=$(git rev-list --count ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
+          if [ "$COMMITS" -ne 1 ]; then
+            echo "发版 PR 必须仅包含 1个 commit，当前为 $COMMITS 个。"
+            exit 1
+          fi
+
+          COMMIT_MSG=$(git log --format=%s -n 1 ${{ github.event.pull_request.head.sha }})
+          if ! echo "$COMMIT_MSG" | grep -Eq '^release: v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-((0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(\+([0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*))?$'; then
+            echo "Commit 标题不符合规范，应使用语义化版本号: $COMMIT_MSG"
+            exit 1
+          fi

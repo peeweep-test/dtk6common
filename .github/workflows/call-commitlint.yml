@@ -7,5 +7,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check_job:
-    uses: linuxdeepin/.github/.github/workflows/commitlint.yml@master
+  commitlint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch code
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Call Conventional Commits Checker
+        uses: linuxdeepin/action-conventionalcommits-checker@master
