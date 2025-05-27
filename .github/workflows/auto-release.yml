@@ -1,6 +1,7 @@
 name: Auto Release
 on:
   pull_request_target:
+    types: [opened, synchronize, reopened]
   push:
     branches:
       - 'main'
@@ -14,7 +15,7 @@ jobs:
   # 检查PR格式的正确性
   releaselint:
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request_target'
+    if: github.event_name == 'pull_request_target' && github.event.action != 'closed'
     steps:
       - name: 检出 PR 代码
         uses: actions/checkout@v4
@@ -47,3 +48,141 @@ jobs:
             echo "Commit 标题不符合规范，应使用语义化版本号: $COMMIT_MSG"
             exit 1
           fi
+
+  # 生成变更日志
+  create_changelog:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - name: 检出 PR 代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 检查是否为发布提交
+        id: check_release
+        run: |
+          COMMIT_MSG=$(git log --format=%s -n 1)
+          if ! echo "$COMMIT_MSG" | grep -q '^release'; then
+            echo "Commit 标题不以 'release' 开头，跳过发布生成流程……"
+            echo "is_release=false" >> $GITHUB_OUTPUT
+          else
+            echo "is_release=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install git-cliff from crates.io
+        if: steps.check_release.outputs.is_release == 'true'
+        uses: baptiste0928/cargo-install@v3
+        with:
+          crate: git-cliff
+
+      - name: 生成变更日志
+        if: steps.check_release.outputs.is_release == 'true'
+        run: |
+
+            # 获取第一条提交的hash和消息
+            release_commit_hash=$(git rev-parse HEAD)
+            release_commit_message=$(git log --format="%s" -n 1 HEAD)
+
+            # 获取最新提交人的名字和邮箱
+            author_name=$(git log --format="%an" -n 1 HEAD)
+            author_email=$(git log --format="%ae" -n 1 HEAD)
+
+            # 获取仓库名 (GitHub Actions 环境)
+            if [ -n "$GITHUB_REPOSITORY" ]; then
+                repo_name=$(basename "$GITHUB_REPOSITORY")
+            else
+                # 本地环境回退方案
+                repo_name=$(basename $(git rev-parse --show-toplevel))
+            fi
+
+            # 配置git
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+            # 从提交消息中提取版本号 (删除 "release: " 前缀)
+            if [[ $release_commit_message =~ ^release:\ (.+) ]]; then
+                version=${BASH_REMATCH[1]}
+            else
+                echo "第一条commit消息不包含版本号： $release_commit_message" >&2
+                exit 1
+            fi
+            echo "找到版本号: $version"
+            echo "提交hash: $release_commit_hash"
+
+            git branch "release-${version}"
+            git switch "release-${version}"
+
+            echo "正在生成 Changelog.md ……"
+            if [ -f "Changelog.md" ]; then
+                git cliff --use-branch-tags --unreleased --tag ${version} --skip-commit ${release_commit_hash} --config keepachangelog --prepend "Changelog.md"
+            else
+                git cliff --use-branch-tags --unreleased --tag ${version} --skip-commit ${release_commit_hash} --config keepachangelog -o "Changelog.md"
+            fi
+
+            #git add .
+            #git commit -m "docs: Update Changelog.md"
+            git show -s
+
+            echo -e "\n"
+
+            if [ -d "debian" ]; then
+                echo "为Debian生成版本更新……"
+                
+                # 获取当前日期时间
+                current_date=$(date -R)
+                
+                # 创建新的changelog条目
+                new_entry="${repo_name} (${version}) unstable; urgency=medium
+
+            * Release ${version}
+
+            -- ${author_name} <${author_email}>  ${current_date}
+            "
+                
+                # 将新条目添加到changelog开头
+                echo "${new_entry}" > debian/changelog.tmp
+                cat debian/changelog >> debian/changelog.tmp
+                mv debian/changelog.tmp debian/changelog
+                
+                #git add .
+                #git commit -m "chore(debian):New release ${version}"
+                git show -s
+
+                echo -e "\n"
+            fi
+
+            if [ -f "archlinux/PKGBUILD" ]; then
+                echo "正在更新 PKGBUILD 版本号……"
+                
+                # 更新版本号
+                sed -i "s/^pkgver=.*/pkgver=${version}/" archlinux/PKGBUILD
+                
+                # 重置 pkgrel 为 1
+                sed -i "s/^pkgrel=.*/pkgrel=1/" archlinux/PKGBUILD
+                
+                #git add .
+                #git commit -m "chore(archlinux):New release ${version}"
+                git show -s
+
+                echo -e "\n"
+            fi
+
+            if [ -f "rpm/${repo_name}.spec" ]; then
+                echo "正在更新 RPM spec 文件版本号……"
+                
+                # 更新版本号
+                sed -i "s/^Version:.*/Version: ${version}/" rpm/${repo_name}.spec
+                
+                # 重置 Release 为 1
+                sed -i "s/^Release:.*/Release: 1/" rpm/${repo_name}.spec
+                
+                #git add .
+                #git commit -m "chore(rpm):New release ${version}"
+                git show -s
+                
+                echo -e "\n"
+            fi
+
+            git push -u origin "release-${version}"
+
