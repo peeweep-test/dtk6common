@@ -27,7 +27,7 @@ jobs:
         run: |
           COMMIT_MSG=$(git log --format=%s -n 1 ${{ github.event.pull_request.head.sha }})
           if ! echo "$COMMIT_MSG" | grep -q '^release'; then
-            echo "Commit 标题不以 'release' 开头，跳过发布流程……"
+            echo "Commit 标题不以 'release' 开头，跳过发布检查流程……"
             echo "is_release=false" >> $GITHUB_OUTPUT
           else
             echo "is_release=true" >> $GITHUB_OUTPUT
