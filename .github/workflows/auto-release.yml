@@ -1,7 +1,7 @@
 name: Auto Release
 on:
   pull_request_target:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, closed]
   push:
     branches:
       - 'main'
@@ -54,20 +54,34 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
     steps:
+      - name: 使用 GitHub App 进行身份验证
+        id: auth
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID}}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
       - name: 检出 PR 代码
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ steps.auth.outputs.token }}
 
       - name: 检查是否为发布提交
         id: check_release
         run: |
-          COMMIT_MSG=$(git log --format=%s -n 1)
-          if ! echo "$COMMIT_MSG" | grep -q '^release'; then
-            echo "Commit 标题不以 'release' 开头，跳过发布生成流程……"
-            echo "is_release=false" >> $GITHUB_OUTPUT
+          COMMIT_MSG=$(git log --format=%s -n 1 HEAD)
+
+          # 从提交消息中提取版本号
+          if [[ $COMMIT_MSG =~ ^release:\ v?(.+) ]]; then
+              version=${BASH_REMATCH[1]}
+              echo "version=${version}" >> $GITHUB_OUTPUT
+              echo "is_release=true" >> $GITHUB_OUTPUT
+              echo "找到版本号: $version"
           else
-            echo "is_release=true" >> $GITHUB_OUTPUT
+              echo "第一条commit消息不包含版本号： $COMMIT_MSG" >&2
+              echo "is_release=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Install git-cliff from crates.io
@@ -82,7 +96,8 @@ jobs:
 
             # 获取第一条提交的hash和消息
             release_commit_hash=$(git rev-parse HEAD)
-            release_commit_message=$(git log --format="%s" -n 1 HEAD)
+            version=${{ steps.check_release.outputs.version }}
+            echo "提交hash: $release_commit_hash"
 
             # 获取最新提交人的名字和邮箱
             author_name=$(git log --format="%an" -n 1 HEAD)
@@ -100,24 +115,21 @@ jobs:
             git config --global user.name "github-actions[bot]"
             git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-            # 从提交消息中提取版本号 (删除 "release: " 前缀)
-            if [[ $release_commit_message =~ ^release:\ (.+) ]]; then
-                version=${BASH_REMATCH[1]}
-            else
-                echo "第一条commit消息不包含版本号： $release_commit_message" >&2
-                exit 1
-            fi
-            echo "找到版本号: $version"
-            echo "提交hash: $release_commit_hash"
-
-            git branch "release-${version}"
-            git switch "release-${version}"
-
             echo "正在生成 Changelog.md ……"
             if [ -f "Changelog.md" ]; then
-                git cliff --use-branch-tags --unreleased --tag ${version} --skip-commit ${release_commit_hash} --config keepachangelog --prepend "Changelog.md"
+                git cliff --use-branch-tags --unreleased --tag ${version} \
+                  --github-repo "${GITHUB_REPOSITORY}" \
+                  --github-token "${{ secrets.GITHUB_TOKEN }}" \
+                  --skip-commit ${release_commit_hash} \
+                  --config keepachangelog \
+                  --prepend "Changelog.md"
             else
-                git cliff --use-branch-tags --unreleased --tag ${version} --skip-commit ${release_commit_hash} --config keepachangelog -o "Changelog.md"
+                git cliff --use-branch-tags --unreleased --tag ${version} \
+                --github-repo "${GITHUB_REPOSITORY}" \
+                --github-token "${{ secrets.GITHUB_TOKEN }}" \
+                --skip-commit ${release_commit_hash} \
+                --config keepachangelog \
+                -o "Changelog.md"
             fi
 
             git add .
@@ -135,7 +147,7 @@ jobs:
                 # 创建新的changelog条目
                 new_entry="${repo_name} (${version}) unstable; urgency=medium
 
-            * Release ${version}
+              * Release ${version}
 
              -- ${author_name} <${author_email}>  ${current_date}
             "
@@ -184,5 +196,22 @@ jobs:
                 echo -e "\n"
             fi
 
-            git push -u origin "release-${version}"
+      - name: 创建PR
+        id: cpr
+        if: steps.check_release.outputs.is_release == 'true'
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ steps.auth.outputs.token }}
+          title: "Release ${{ steps.check_release.outputs.version }}"
+          body-path: "Changelog.md"
+          branch: "release-${version}"
+          commit-message: "chore(release): Release ${version}"
+
+      - name: Check outputs
+        if: ${{ steps.cpr.outputs.pull-request-number }}
+        run: |
+          echo "Pull Request Number - ${{ steps.cpr.outputs.pull-request-number }}"
+          echo "Pull Request URL - ${{ steps.cpr.outputs.pull-request-url }}"
+
+
 
