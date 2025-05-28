@@ -212,5 +212,49 @@ jobs:
           echo "Pull Request Number - ${{ steps.cpr.outputs.pull-request-number }}"
           echo "Pull Request URL - ${{ steps.cpr.outputs.pull-request-url }}"
 
+  # 自动打标签
+  auto_tag:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request_target' && github.event.action == 'closed' && github.event.pull_request.merged == true
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 检查是否为 release 分支的合并
+        id: check_release_merge
+        run: |
+          # 获取 PR 的分支名
+          BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
+          
+          # 检查是否是 release 分支
+          if [[ $BRANCH_NAME =~ ^release-(.+) ]]; then
+            version=${BASH_REMATCH[1]}
+            echo "version=${version}" >> $GITHUB_OUTPUT
+            echo "should_tag=true" >> $GITHUB_OUTPUT
+            echo "检测到 release 分支: $BRANCH_NAME，版本: $version"
+          else
+            echo "不是 release 分支，跳过打标签"
+            echo "分支名: $BRANCH_NAME"
+            echo "should_tag=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 创建标签
+        if: steps.check_release_merge.outputs.should_tag == 'true'
+        run: |
+          version=${{ steps.check_release_merge.outputs.version }}
+          tag_name="v${version}"
+          
+          # 检查标签是否已存在
+          if git tag | grep -q "^${tag_name}$"; then
+            echo "标签 ${tag_name} 已存在！" >&2
+            exit 1
+          else
+            echo "创建标签: ${tag_name}"
+            git tag -a "${tag_name}" -m "Release ${version}"
+            git push origin "${tag_name}"
+            echo "标签 ${tag_name} 已创建并推送"
+          fi
 
 
