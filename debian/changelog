@@ -1,3 +1,9 @@
+dtk6common (6.0.0) unstable; urgency=medium
+
+  * Release 6.0.0
+
+ -- Cryolitia <cryolitia@deepin.org>  Wed, 28 May 2025 03:03:08 +0000
+
 dtkcommon (5.7.16) unstable; urgency=medium
 
   * Release 5.7.16
