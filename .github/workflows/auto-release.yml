@@ -137,7 +137,7 @@ jobs:
 
             * Release ${version}
 
-            -- ${author_name} <${author_email}>  ${current_date}
+             -- ${author_name} <${author_email}>  ${current_date}
             "
                 
                 # 将新条目添加到changelog开头
@@ -146,7 +146,7 @@ jobs:
                 mv debian/changelog.tmp debian/changelog
                 
                 git add .
-                git commit -m "chore(debian):New release ${version}"
+                git commit -m "chore(debian): New release ${version}"
                 git show -s
 
                 echo -e "\n"
@@ -162,7 +162,7 @@ jobs:
                 sed -i "s/^pkgrel=.*/pkgrel=1/" archlinux/PKGBUILD
                 
                 git add .
-                git commit -m "chore(archlinux):New release ${version}"
+                git commit -m "chore(archlinux): New release ${version}"
                 git show -s
 
                 echo -e "\n"
@@ -178,7 +178,7 @@ jobs:
                 sed -i "s/^Release:.*/Release: 1/" rpm/${repo_name}.spec
                 
                 git add .
-                git commit -m "chore(rpm):New release ${version}"
+                git commit -m "chore(rpm): New release ${version}"
                 git show -s
                 
                 echo -e "\n"
