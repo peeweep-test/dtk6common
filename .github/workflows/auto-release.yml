@@ -1,0 +1,22 @@
+name: Auto Release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.0.0)'
+        required: true
+      name:
+        description: 'The name of the person to release the version'
+        required: false
+      email:
+        description: 'The email of the person to release the version'
+        required: false
+
+jobs:
+  auto_tag:
+    uses: linuxdeepin/.github/.github/workflows/auto-release.yml@master
+    secrets: inherit
+    with:
+      version: ${{ inputs.version }}
+      name: ${{ inputs.name }}
+      email: ${{ inputs.email }}

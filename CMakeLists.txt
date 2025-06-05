@@ -3,7 +3,12 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 cmake_minimum_required(VERSION 3.13)
-set (DTK_VERSION "5.6.12" CACHE STRING "define project version")
+
+# 从 version.txt 读取版本号
+file(READ "${CMAKE_SOURCE_DIR}/version.txt" DTK_VERSION)
+string(STRIP "${DTK_VERSION}" DTK_VERSION)
+set(DTK_VERSION "${DTK_VERSION}" CACHE STRING "define project version")
+
 project(dtkcommon
   VERSION ${DTK_VERSION}
   DESCRIPTION "DTK common"
