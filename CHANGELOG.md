@@ -1,0 +1,165 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [5.7.18] - 2025-06-27
+
+### Added
+
+- Feat: add archlinux build
+- Add README.zh_CN.md
+- Add linglong build support
+- Chore(CI): add OBS workflows
+- Add cmake functions
+- Add config for dstyle
+- Add loggingrules config
+- Add enableDtkAnimations config
+- Add 'scrollBarPolicy' and 'sizeMode' config
+- Chore(ci): add auto-release workflow
+
+### Changed
+
+- Init project
+- 添加features文件
+- 新增dtk_testcase.prf文件
+- 修改正则表达式,匹配多版本共存的命名要求
+- 添加cmake文件,同步修改Makefile
+- 使用qmake整理工程
+- Main.cpp添加版权声明
+- 添加gitignore文件
+- Lib 安装目录获取方式修改
+- 删除debian目录下的不必要文件
+- Dtk上游打包支持一包多依赖
+- 添加配置策略的meta和override部署配置
+- 支持cmake引用配置策略的meta和override部署配置
+- 支持 Dtk 项目自定义 QMake 编译
+- 增加安全编译选项
+- 添加配置策略文件安装时非uos的deb打包规范的支持.
+- 添加 euler 打包脚本
+- Change template to aux
+- File Sync from linuxdeepin/.github (#3)
+- Sync by https://github.com/linuxdeepin/.github/commit/41155231b0dece553ad9b426ea5b891a423a0e40 (#4)
+- File Sync from linuxdeepin/.github (#5)
+- 取消cppcheck检查流程 (#9)
+- Sync by https://github.com/linuxdeepin/.github/commit/99dfe0471c3124c80af8fed2611b8489c34d5a17 (#10)
+- Feat: update archlinux build
+- Sync by (#15)
+- Sync by (#16)
+- Sync by https://github.com/linuxdeepin/.github/commit/fed570b6d7fe6ca5b435e6d4c8ef4985299cabf7 (#17)
+- Bump debian/changelog version
+- From qmake to cmake
+- Update licenses and README.md
+- Sync by https://github.com/linuxdeepin/.github/commit/8cd7951872aad11af6f6f0013b35969154cb7920 (#25)
+- Sync by https://github.com/linuxdeepin/.github/commit/1086c873ff7f018a066f2d39d5ac893eb5351057 (#26)
+- Update README.zh_CN.md
+- Sync by https://github.com/linuxdeepin/.github/commit/ab82576125f34a03d243a0a992614b5ee23292f2 (#28)
+- Sync by "
+- Sync by https://github.com/linuxdeepin/.github/commit/6fbf8e00b96efe3fd50deef879f6679b80fa59a8
+- Correct README
+- Sync by https://github.com/linuxdeepin/.github/commit/6aa579e31cc66ec92da0523a11b7f638f668833b
+- Chore: update changelog
+- Improve archlinux PKGBUILD
+- Specify source directory to suppress cmake warning
+- Update changelog
+- Update changelog
+- Update to 5.6.9
+- Sync by https://github.com/linuxdeepin/.github/commit/c5d10d3aeb9233a70f6290cb89d3b193f7b1f804
+- Sync by https://github.com/linuxdeepin/.github/commit/2e5e092ba3f86b16d1aabbabcf0bfd2ae65b19c8
+- Optimize install directory
+- Update to dtk6
+- Update changelog
+- Sync by https://github.com/linuxdeepin/.github/commit/559e91167d4919644f37bbcf123eb0651c1528ea
+- Update changelog
+- Update changelog
+- Include DtkBuildHelper.cmake
+- Move DtkBuildHelper to separate module (#55)
+- Not include DtkBuildHelper (#56)
+- Update changelog
+- Update changelog
+- Chore: correct a typo in DtkBuildHelper.cmake
+- Update changelog
+- Update changelog
+- Update changelog
+- Update changelog
+- Update changelog
+- Update changelog
+- Update changelog (#68)
+- Update changelog
+- Update changelog
+- Update changelog
+- Update changelog
+- Update changelog
+- Update changelog
+- Update changelog
+- Update changelog
+- Update changelog
+- Update changelog
+- Update changelog
+- Update changelog
+- Update changelog
+- Update changelog
+- Update changelog
+- Bump version to 5.7.10
+- Bump version to 5.7.11
+- Bump version to 5.7.12
+- Bump version to 5.7.13
+- Bump version to 5.7.14
+- Bump version to 5.7.15
+- Bump version to 5.7.16
+- Rename dtkcommon.spec to dtk6common.spec
+
+### Fixed
+
+- 修改features的prf文件实现dktcore,dtkwidget,dtkgui的公共构建
+- 修改Makefile，删除不必要的变量
+- 修改control文件，去掉版本检测
+- 修改README.md文件
+- 修复features_files_install_path变量赋值的错误的bug
+- 修复多版本共存dtkgui,dtkwidget构建出现的include文件找不到的问题
+- 修复MODULE_VERSION_ID变量导致的include路径为空的问题
+- 修改INCLUDE_INSTALL_DIR变量的赋值方式
+- 修改Makefile，添加写qt_lib_dtkcommon.pri文件
+- 修复直接make install没有执行构建过程的bug
+- 修复版本号初始化的问题
+- Build unwanted error
+- Libdtkcommon安装拆分出一个libdtkcommon-dev开发包
+- 对多版本构建方式进行优化
+- 修改变量DTK_MODULE_NAME的正则表达式判定
+- 修复DEEPIN_OS_RELEASE_TOOL为空的问题
+- Gerrit build error
+- 修复dtkcommon获取版本号失败的问题
+- 安装冲突问题
+- 依赖冲突替换的版本号微调
+- Build warnning
+- Pkgconfig cannot find dtkxxx5.5
+- 删除DtkCMakeConfig.cmake, DtkSettingsToolsMacros.cmake和DtkToolsConfig.cmake文件,同步修改dtkcommon.pro文件
+- Build warning
+- 修改README.md和control文件
+- 修复上游filedrag.conf问题
+- 修改deb包没有包含新增cmake文件的bug.
+- 配置策略文件安装时获取子目录错误.
+- 修改安全编译选项
+- Modify dconfig's file install path
+- Fix: use $${TARGET} for QRC_PATH
+- Fix: archlinux build failed
+- Shemams is installed to the wrong path (#20)
+- Wrong path in pri file
+- Licence
+- Mkspecs path
+- Features install fix
+- Extra variable passed for version
+- Can't find DtkBuildHelper in Dtk6
+- Archlinux build DTK_VERSION empty
+
+### Removed
+
+- Remove git dependency
+- Remove the conflix of dtkgui
+- Remove dconfig prf and cmake module
+- Remove Qt features for DTK
+
+
+<!-- generated by git-cliff -->
