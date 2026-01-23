@@ -4,6 +4,12 @@ dtkcommon (5.7.20) unstable; urgency=medium
 
  -- YeShanShan <yeshanshan@uniontech.com>  Mon, 19 May 2025 17:21:42 +0800
 
+dtkcommon (5.7.20) unstable; urgency=medium
+
+  * Release 5.7.20
+
+ -- YeShanShan <yeshanshan@uniontech.com>  Mon, 19 May 2025 17:21:42 +0800
+
 dtkcommon (5.7.19) unstable; urgency=medium
 
   * Release 5.7.19
